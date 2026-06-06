@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SF Bingo">
+  <title>Birthday Scavenger Hunt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fef3e2;
+      --card-bg: #fff;
+      --primary: #ff6b35;
+      --primary-light: #ff8c5a;
+      --accent: #f7c948;
+      --completed: #4ecdc4;
+      --completed-dark: #3ab5ad;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --shadow: rgba(0,0,0,0.08);
+      --radius: 14px;
+      --gap: 6px;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    /* ---------- ENTRY SCREEN ---------- */
+    #entry-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 32px 24px;
+      text-align: center;
+      gap: 28px;
+    }
+
+    #entry-screen.hidden { display: none; }
+
+    .entry-emoji { font-size: 64px; line-height: 1; }
+
+    .entry-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1.15;
+    }
+
+    .entry-subtitle {
+      font-size: 16px;
+      color: var(--text-light);
+      max-width: 280px;
+      line-height: 1.5;
+    }
+
+    .entry-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .entry-form input {
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      padding: 16px 20px;
+      border: 2px solid #e0d6c8;
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .entry-form input:focus {
+      border-color: var(--primary);
+    }
+
+    .entry-form input::placeholder {
+      color: #bbb;
+    }
+
+    .btn-start {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      padding: 16px 32px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+      box-shadow: 0 4px 16px rgba(255,107,53,0.3);
+    }
+
+    .btn-start:active { transform: scale(0.96); }
+    .btn-start:disabled {
+      background: #ccc;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* ---------- GAME SCREEN ---------- */
+    #game-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100dvh;
+      padding: 10px 10px 6px;
+    }
+
+    #game-screen.active { display: flex; }
+
+    .game-header {
+      text-align: center;
+      padding: 4px 0 6px;
+    }
+
+    .game-header h1 {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .team-label {
+      font-size: 13px;
+      color: var(--text-light);
+      margin-top: 2px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      max-width: 400px;
+      height: 8px;
+      background: #e8ddd0;
+      border-radius: 4px;
+      margin: 4px auto 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--completed));
+      border-radius: 4px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: var(--text-light);
+      text-align: center;
+    }
+
+    /* ---------- BINGO GRID ---------- */
+    .bingo-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--gap);
+      width: 100%;
+      max-width: 400px;
+      margin: 6px auto 0;
+    }
+
+    .bingo-cell {
+      position: relative;
+      aspect-ratio: 1;
+      background: var(--card-bg);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px var(--shadow);
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .bingo-cell:active { transform: scale(0.94); }
+
+    .bingo-cell.completed {
+      background: var(--completed);
+      box-shadow: 0 2px 12px rgba(78, 205, 196, 0.35);
+    }
+
+    .bingo-cell.completed .cell-text { color: #fff; }
+    .bingo-cell.completed .cell-emoji { filter: grayscale(0) brightness(1.1); }
+
+    .bingo-cell.free-space {
+      background: var(--accent);
+      box-shadow: 0 2px 12px rgba(247,201,72,0.35);
+    }
+
+    .bingo-cell.free-space .cell-text { color: #fff; font-weight: 600; }
+
+    .cell-emoji {
+      font-size: 20px;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .cell-text {
+      font-size: 9px;
+      font-weight: 500;
+      line-height: 1.2;
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .cell-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .checkmark {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .bingo-cell.completed .checkmark { opacity: 1; }
+
+    /* ---------- BINGO LINE HIGHLIGHT ---------- */
+    .bingo-cell.bingo-line {
+      animation: bingoGlow 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes bingoGlow {
+      from { box-shadow: 0 0 8px rgba(247,201,72,0.4); }
+      to { box-shadow: 0 0 20px rgba(247,201,72,0.8); }
+    }
+
+    /* ---------- TASK DETAIL MODAL ---------- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-sheet {
+      background: #fff;
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 75dvh;
+      padding: 28px 24px calc(24px + var(--safe-bottom));
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-emoji { font-size: 48px; text-align: center; margin-bottom: 12px; }
+    .modal-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .modal-desc {
+      font-size: 15px;
+      color: var(--text-light);
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .modal-location {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-light);
+      background: #f5f0ea;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .btn-complete {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: transform 0.1s;
+      margin-bottom: 8px;
+    }
+
+    .btn-complete:active { transform: scale(0.97); }
+
+    .btn-complete.mark {
+      background: var(--completed);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(78,205,196,0.3);
+    }
+
+    .btn-complete.unmark {
+      background: #f0e6d8;
+      color: var(--text);
+    }
+
+    .btn-close-modal {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text-light);
+      cursor: pointer;
+    }
+
+    /* ---------- BINGO BANNER ---------- */
+    .bingo-banner {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--accent), var(--primary));
+      color: #fff;
+      text-align: center;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      z-index: 50;
+      box-shadow: 0 4px 20px rgba(255,107,53,0.3);
+      padding-top: calc(14px + var(--safe-top));
+    }
+
+    .bingo-banner.show { display: block; animation: bannerDrop 0.5s ease; }
+
+    @keyframes bannerDrop {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+
+    /* ---------- CONFETTI ---------- */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+      overflow: hidden;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      top: -10px;
+      animation: confettiFall 3s ease-in forwards;
+    }
+
+    @keyframes confettiFall {
+      to {
+        transform: translateY(110dvh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* ---------- FOOTER ---------- */
+    .game-footer {
+      text-align: center;
+      padding: 6px 0 4px;
+    }
+
+    .btn-reset {
+      font-size: 13px;
+      color: var(--text-light);
+      background: none;
+      border: none;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ENTRY SCREEN -->
+  <div id="entry-screen">
+    <div class="entry-emoji">🎂🗺️</div>
+    <h1 class="entry-title">Birthday<br>Scavenger Hunt</h1>
+    <p class="entry-subtitle">Explore San Francisco, complete challenges, and get BINGO!</p>
+    <div class="entry-form">
+      <input type="text" id="team-input" placeholder="Enter your team name" autocomplete="off" autocapitalize="words" spellcheck="false">
+      <button class="btn-start" id="btn-start" disabled>Let's Go!</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen">
+    <div class="game-header">
+      <h1>🎂 SF Scavenger Hunt</h1>
+      <div class="team-label">Team: <strong id="team-display"></strong></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-text"><span id="completed-count">0</span> / 24 completed</div>
+    </div>
+    <div class="bingo-grid" id="bingo-grid"></div>
+    <div class="game-footer">
+      <button class="btn-reset" id="btn-reset">Start Over</button>
+    </div>
+  </div>
+
+  <!-- TASK DETAIL MODAL -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-sheet" id="modal-sheet">
+      <div class="modal-emoji" id="modal-emoji"></div>
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-desc" id="modal-desc"></div>
+      <div class="modal-location" id="modal-location">
+        <span>📍</span>
+        <span id="modal-area"></span>
+      </div>
+      <button class="btn-complete mark" id="btn-toggle">Mark Complete</button>
+      <button class="btn-close-modal" id="btn-close-modal">Close</button>
+    </div>
+  </div>
+
+  <!-- BINGO BANNER -->
+  <div class="bingo-banner" id="bingo-banner">🎉 BINGO! You got a line! 🎉</div>
+
+  <!-- CONFETTI CONTAINER -->
+  <div class="confetti-container" id="confetti-container"></div>
+
+  <script>
+    const TASKS = [
+      { emoji: "🌉", title: "Golden Gate Selfie", desc: "Take a team selfie with the Golden Gate Bridge in the background.", area: "Golden Gate Bridge" },
+      { emoji: "🦭", title: "Sea Lion Serenade", desc: "Find the sea lions at Pier 39 and record a 10-second video of them.", area: "Pier 39, Fisherman's Wharf" },
+      { emoji: "🚃", title: "Cable Car Ride", desc: "Ride a cable car and take a photo of the whole team on it.", area: "Powell-Mason or Powell-Hyde Line" },
+      { emoji: "🎨", title: "Mural Pose", desc: "Find a mural in the Mission District and recreate the pose or scene.", area: "Mission District" },
+      { emoji: "🌳", title: "Park Picnic Snap", desc: "Take a photo pretending to have a fancy picnic in Golden Gate Park.", area: "Golden Gate Park" },
+      { emoji: "🏖️", title: "Ocean Beach Dash", desc: "Touch the Pacific Ocean and take a photo of your feet in the water.", area: "Ocean Beach" },
+      { emoji: "🍦", title: "Ice Cream Stop", desc: "Get ice cream from a local SF shop and take a photo with it.", area: "Anywhere in SF" },
+      { emoji: "📮", title: "Painted Ladies", desc: "Find the famous Painted Ladies houses and take a team photo.", area: "Alamo Square" },
+      { emoji: "🐉", title: "Chinatown Gate", desc: "Take a photo at the Dragon's Gate entrance to Chinatown.", area: "Chinatown, Grant Ave" },
+      { emoji: "🛒", title: "Ferry Building Feast", desc: "Buy a snack at the Ferry Building and photograph it.", area: "Ferry Building Marketplace" },
+      { emoji: "🧗", title: "Lombard Street Climb", desc: "Walk down (or up!) Lombard Street and take a photo of the curves.", area: "Lombard Street, Russian Hill" },
+      { emoji: "🎸", title: "Street Performer Tip", desc: "Find a street performer, tip them, and get a photo together.", area: "Anywhere in SF" },
+      { emoji: "📚", title: "City Lights Visit", desc: "Visit City Lights Bookstore and take a photo with a book.", area: "City Lights, North Beach" },
+      { emoji: "🏳️‍🌈", title: "Castro Rainbow", desc: "Find a rainbow crosswalk and take a jumping photo on it.", area: "The Castro" },
+      { emoji: "⛵", title: "Sailboat Spot", desc: "Take a photo of a sailboat on the Bay.", area: "The Embarcadero / Marina" },
+      { emoji: "🎭", title: "Union Square Pose", desc: "Strike a dramatic pose in Union Square and photograph it.", area: "Union Square" },
+      { emoji: "🌊", title: "Wave Organ Listen", desc: "Visit the Wave Organ and record a short audio or video.", area: "Marina District" },
+      { emoji: "🏔️", title: "Twin Peaks View", desc: "Get a panoramic photo of the city from Twin Peaks.", area: "Twin Peaks" },
+      { emoji: "🖼️", title: "SFMOMA Selfie", desc: "Take a selfie in front of SFMOMA (outside counts!).", area: "SoMa, 3rd Street" },
+      { emoji: "🍜", title: "Noodle Run", desc: "Get a bowl of noodles or soup dumplings and take a photo.", area: "Chinatown / Richmond" },
+      { emoji: "🐕", title: "Dog Petting", desc: "Pet a friendly dog and take a photo (ask the owner first!).", area: "Anywhere in SF" },
+      { emoji: "🚂", title: "F-Line Trolley", desc: "Spot a vintage F-line streetcar and snap a photo.", area: "Market St / Embarcadero" },
+      { emoji: "🧁", title: "Bakery Detour", desc: "Visit a local bakery and take a photo of your treat.", area: "Anywhere in SF" },
+      { emoji: "🪴", title: "Hidden Garden", desc: "Find a hidden stairway garden and take a team photo in it.", area: "16th Ave Tiled Steps / Others" },
+      { emoji: "🎪", title: "Musée Mécanique", desc: "Play a game at Musée Mécanique and photograph the machine.", area: "Fisherman's Wharf" },
+      { emoji: "🧀", title: "Sourdough Bread", desc: "Get some SF sourdough bread and take a cheesy photo.", area: "Boudin / Anywhere" },
+      { emoji: "🎵", title: "Karaoke Moment", desc: "Sing a song together and record a short clip.", area: "Anywhere in SF" },
+      { emoji: "🗼", title: "Coit Tower", desc: "Take a photo at or near Coit Tower.", area: "Telegraph Hill" },
+      { emoji: "🤳", title: "Stranger Photo", desc: "Ask a stranger to take a team photo at a scenic spot.", area: "Anywhere in SF" },
+      { emoji: "🧋", title: "Boba Break", desc: "Get boba tea and take a photo toasting together.", area: "Anywhere in SF" },
+      { emoji: "🎈", title: "Birthday Balloon", desc: "Find a balloon somewhere in the city and take a photo with it.", area: "Anywhere in SF" },
+      { emoji: "🏛️", title: "City Hall Glamour", desc: "Take a glamorous team photo in front of City Hall.", area: "Civic Center" },
+      { emoji: "🛤️", title: "Embarcadero Walk", desc: "Take a walking photo along the Embarcadero waterfront.", area: "The Embarcadero" },
+      { emoji: "🎤", title: "Team Chant", desc: "Record a 5-second team chant or cheer on video.", area: "Anywhere in SF" },
+      { emoji: "🌺", title: "Flower Power", desc: "Find flowers for sale, buy one, and take a photo with it.", area: "Anywhere in SF" },
+      { emoji: "☕", title: "Coffee Culture", desc: "Visit a third-wave coffee shop and photograph your order.", area: "Anywhere in SF" },
+      { emoji: "🎯", title: "Bullseye Shot", desc: "Take a photo that perfectly frames Transamerica Pyramid.", area: "Financial District" },
+      { emoji: "🧱", title: "Brick Alley Art", desc: "Find street art in an alley and take a creative photo.", area: "Clarion Alley / Balmy Alley" },
+      { emoji: "🌅", title: "Sunset Chase", desc: "Catch a sunset view from anywhere in the city and photograph it.", area: "Anywhere with a west view" },
+      { emoji: "🎂", title: "Birthday Wish", desc: "Find a fountain, make a birthday wish, and toss in a coin.", area: "Anywhere in SF" }
+    ];
+
+    // Seeded random using team name
+    function seedFromString(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+      }
+      return Math.abs(hash);
+    }
+
+    function seededShuffle(arr, seed) {
+      const shuffled = [...arr];
+      let s = seed;
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        s = (s * 1103515245 + 12345) & 0x7fffffff;
+        const j = s % (i + 1);
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    // State
+    let teamName = '';
+    let board = [];
+    let completed = new Set();
+    let bingoAchieved = new Set();
+
+    const entryScreen = document.getElementById('entry-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const teamInput = document.getElementById('team-input');
+    const btnStart = document.getElementById('btn-start');
+    const teamDisplay = document.getElementById('team-display');
+    const bingoGrid = document.getElementById('bingo-grid');
+    const progressFill = document.getElementById('progress-fill');
+    const completedCount = document.getElementById('completed-count');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalEmoji = document.getElementById('modal-emoji');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDesc = document.getElementById('modal-desc');
+    const modalArea = document.getElementById('modal-area');
+    const modalLocation = document.getElementById('modal-location');
+    const btnToggle = document.getElementById('btn-toggle');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const bingoBanner = document.getElementById('bingo-banner');
+    const btnReset = document.getElementById('btn-reset');
+
+    let currentCellIndex = null;
+
+    // Entry screen
+    teamInput.addEventListener('input', () => {
+      btnStart.disabled = teamInput.value.trim().length === 0;
+    });
+
+    btnStart.addEventListener('click', () => startGame(teamInput.value.trim()));
+
+    teamInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && teamInput.value.trim()) startGame(teamInput.value.trim());
+    });
+
+    function startGame(name) {
+      teamName = name;
+      const seed = seedFromString(teamName.toLowerCase());
+      const shuffled = seededShuffle(TASKS, seed);
+      board = shuffled.slice(0, 24);
+      board.splice(12, 0, { emoji: "⭐", title: "FREE SPACE", desc: "This one's on us — happy birthday!", area: "", isFree: true });
+
+      completed = new Set([12]);
+      bingoAchieved = new Set();
+
+      saveState();
+      showGame();
+    }
+
+    function showGame() {
+      entryScreen.classList.add('hidden');
+      gameScreen.classList.add('active');
+      teamDisplay.textContent = teamName;
+      renderGrid();
+      updateProgress();
+    }
+
+    function renderGrid() {
+      bingoGrid.innerHTML = '';
+      board.forEach((task, i) => {
+        const cell = document.createElement('div');
+        cell.className = 'bingo-cell';
+        if (task.isFree) cell.classList.add('free-space');
+        if (completed.has(i)) cell.classList.add('completed');
+
+        cell.innerHTML = `
+          <span class="checkmark">✓</span>
+          <div class="cell-content">
+            <span class="cell-emoji">${task.emoji}</span>
+            <span class="cell-text">${task.title}</span>
+          </div>
+        `;
+
+        if (!task.isFree) {
+          cell.addEventListener('click', () => openModal(i));
+        }
+
+        bingoGrid.appendChild(cell);
+      });
+
+      highlightBingoLines();
+    }
+
+    function openModal(index) {
+      currentCellIndex = index;
+      const task = board[index];
+      modalEmoji.textContent = task.emoji;
+      modalTitle.textContent = task.title;
+      modalDesc.textContent = task.desc;
+
+      if (task.area) {
+        modalArea.textContent = task.area;
+        modalLocation.style.display = 'flex';
+      } else {
+        modalLocation.style.display = 'none';
+      }
+
+      if (completed.has(index)) {
+        btnToggle.textContent = 'Undo';
+        btnToggle.className = 'btn-complete unmark';
+      } else {
+        btnToggle.textContent = 'Mark Complete ✓';
+        btnToggle.className = 'btn-complete mark';
+      }
+
+      modalOverlay.classList.add('open');
+    }
+
+    function closeModal() {
+      modalOverlay.classList.remove('open');
+      currentCellIndex = null;
+    }
+
+    btnCloseModal.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+    btnToggle.addEventListener('click', () => {
+      if (currentCellIndex === null) return;
+
+      if (completed.has(currentCellIndex)) {
+        completed.delete(currentCellIndex);
+      } else {
+        completed.add(currentCellIndex);
+      }
+
+      saveState();
+      renderGrid();
+      updateProgress();
+      checkBingo();
+      closeModal();
+    });
+
+    function updateProgress() {
+      const total = 24;
+      const done = completed.size - 1; // exclude free space
+      completedCount.textContent = done;
+      progressFill.style.width = `${(done / total) * 100}%`;
+    }
+
+    function checkBingo() {
+      const lines = [
+        [0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24],
+        [0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24],
+        [0,6,12,18,24], [4,8,12,16,20]
+      ];
+
+      let newBingo = false;
+      lines.forEach((line, i) => {
+        const isComplete = line.every(idx => completed.has(idx));
+        if (isComplete && !bingoAchieved.has(i)) {
+          bingoAchieved.add(i);
+          newBingo = true;
+        }
+      });
+
+      if (newBingo) {
+        showBingoBanner();
+        launchConfetti();
+        saveState();
+      }
+
+      highlightBingoLines();
+    }
+
+    function highlightBingoLines() {
+      const lines = [
+        [0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24],
+        [0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24],
+        [0,6,12,18,24], [4,8,12,16,20]
+      ];
+
+      const cells = bingoGrid.querySelectorAll('.bingo-cell');
+      const bingoIndices = new Set();
+
+      lines.forEach((line, i) => {
+        if (bingoAchieved.has(i)) {
+          line.forEach(idx => bingoIndices.add(idx));
+        }
+      });
+
+      cells.forEach((cell, i) => {
+        cell.classList.toggle('bingo-line', bingoIndices.has(i));
+      });
+    }
+
+    function showBingoBanner() {
+      bingoBanner.classList.add('show');
+      setTimeout(() => bingoBanner.classList.remove('show'), 4000);
+    }
+
+    function launchConfetti() {
+      const container = document.getElementById('confetti-container');
+      const colors = ['#ff6b35', '#f7c948', '#4ecdc4', '#ff85a1', '#a78bfa', '#34d399'];
+      for (let i = 0; i < 60; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = Math.random() * 1.5 + 's';
+        piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        piece.style.width = (6 + Math.random() * 8) + 'px';
+        piece.style.height = (6 + Math.random() * 8) + 'px';
+        container.appendChild(piece);
+      }
+      setTimeout(() => container.innerHTML = '', 5000);
+    }
+
+    // Persistence
+    function saveState() {
+      const state = {
+        teamName,
+        board,
+        completed: [...completed],
+        bingoAchieved: [...bingoAchieved]
+      };
+      localStorage.setItem('sf-bingo-state', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem('sf-bingo-state');
+      if (!raw) return false;
+      try {
+        const state = JSON.parse(raw);
+        teamName = state.teamName;
+        board = state.board;
+        completed = new Set(state.completed);
+        bingoAchieved = new Set(state.bingoAchieved || []);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    btnReset.addEventListener('click', () => {
+      if (confirm('Start over with a new team? This will clear your progress.')) {
+        localStorage.removeItem('sf-bingo-state');
+        location.reload();
+      }
+    });
+
+    // Init
+    if (loadState()) {
+      showGame();
+      highlightBingoLines();
+    }
+  </script>
+</body>
+</html>

@@ -180,6 +180,26 @@
       text-align: center;
     }
 
+    /* ---------- NAME HEADER ---------- */
+    .name-header {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--gap);
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .name-header span {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+      text-align: center;
+      padding: 6px 0 2px;
+      letter-spacing: 1px;
+    }
+
     /* ---------- BINGO GRID ---------- */
     .bingo-grid {
       display: grid;
@@ -439,7 +459,7 @@
   <div id="entry-screen">
     <div class="entry-emoji">🎂🗺️</div>
     <h1 class="entry-title">Birthday<br>Scavenger Hunt</h1>
-    <p class="entry-subtitle">Explore San Francisco, complete challenges, and get BINGO!</p>
+    <p class="entry-subtitle">Explore San Francisco, complete challenges, and spell SUMIT!</p>
     <div class="entry-form">
       <input type="text" id="team-input" placeholder="Enter your team name" autocomplete="off" autocapitalize="words" spellcheck="false">
       <button class="btn-start" id="btn-start" disabled>Let's Go!</button>
@@ -453,6 +473,9 @@
       <div class="team-label">Team: <strong id="team-display"></strong></div>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
       <div class="progress-text"><span id="completed-count">0</span> / 24 completed</div>
+    </div>
+    <div class="name-header" id="name-header">
+      <span>S</span><span>U</span><span>M</span><span>I</span><span>T</span>
     </div>
     <div class="bingo-grid" id="bingo-grid"></div>
     <div class="game-footer">
@@ -476,7 +499,7 @@
   </div>
 
   <!-- BINGO BANNER -->
-  <div class="bingo-banner" id="bingo-banner">🎉 BINGO! You got a line! 🎉</div>
+  <div class="bingo-banner" id="bingo-banner">🎉 You got a line! Happy Birthday Sumit! 🎉</div>
 
   <!-- CONFETTI CONTAINER -->
   <div class="confetti-container" id="confetti-container"></div>
